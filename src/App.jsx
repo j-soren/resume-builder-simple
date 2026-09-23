@@ -207,6 +207,25 @@ export default function App() {
             </header>
             
             <div className="flex-1 flex flex-col gap-6">
+              {/* 1. Render First Section (Professional Summary) */}
+              {sections.length > 0 && (
+                <section key={sections[0].id}>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-2 border-b border-neutral-300 pb-1">
+                    {sections[0].heading || 'Untitled Section'}
+                  </h3>
+                  <div className="flex flex-col gap-2 mt-3">
+                    {sections[0].items.map(item => (
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-800"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 2. Render Education */}
               {education.length > 0 && (
                 <section>
                   <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-4 border-b border-neutral-300 pb-1">
@@ -226,7 +245,8 @@ export default function App() {
                 </section>
               )}
 
-              {sections.map((section) => (
+              {/* 3. Render Remaining Sections */}
+              {sections.slice(1).map((section) => (
                 <section key={section.id}>
                   <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-2 border-b border-neutral-300 pb-1">
                     {section.heading || 'Untitled Section'}
@@ -265,6 +285,25 @@ export default function App() {
             </div>
             
             <div className="w-2/3 p-8 pt-12 flex flex-col gap-8 bg-white">
+              {/* 1. Render First Section */}
+              {sections.length > 0 && (
+                <section key={sections[0].id}>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-3 text-blue-900">
+                    {sections[0].heading || 'Untitled Section'}
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {sections[0].items.map(item => (
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-700"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 2. Render Education */}
               {education.length > 0 && (
                 <section>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-4 text-blue-900">
@@ -283,7 +322,8 @@ export default function App() {
                 </section>
               )}
 
-              {sections.map((section) => (
+              {/* 3. Render Remaining Sections */}
+              {sections.slice(1).map((section) => (
                 <section key={section.id}>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-3 text-blue-900">
                     {section.heading || 'Untitled Section'}
@@ -323,6 +363,25 @@ export default function App() {
             </header>
             
             <div className="flex-1 flex flex-col gap-8">
+              {/* 1. Render First Section */}
+              {sections.length > 0 && (
+                <section key={sections[0].id} className="flex gap-6">
+                  <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
+                    {sections[0].heading || 'Untitled'}
+                  </h3>
+                  <div className="w-3/4 flex flex-col gap-2">
+                    {sections[0].items.map(item => (
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-700"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 2. Render Education */}
               {education.length > 0 && (
                 <section className="flex gap-6">
                   <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
@@ -342,7 +401,8 @@ export default function App() {
                 </section>
               )}
 
-              {sections.map((section) => (
+              {/* 3. Render Remaining Sections */}
+              {sections.slice(1).map((section) => (
                 <section key={section.id} className="flex gap-6">
                   <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
                     {section.heading || 'Untitled'}
