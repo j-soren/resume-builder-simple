@@ -1,5 +1,60 @@
-import React, { useState } from 'react';
-import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate, Bold } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate, Bold, Italic, GraduationCap } from 'lucide-react';
+
+// --- Custom Minimalist Rich Text Editor ---
+const RichTextEditor = ({ value, onChange, placeholder }) => {
+  const editorRef = useRef(null);
+
+  // Sync external changes (like initial load) without resetting cursor while typing
+  useEffect(() => {
+    if (editorRef.current && value !== editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = value;
+    }
+  }, [value]);
+
+  const handleInput = (e) => {
+    onChange(e.currentTarget.innerHTML);
+  };
+
+  const executeCommand = (command) => {
+    document.execCommand(command, false, null);
+    editorRef.current.focus();
+    onChange(editorRef.current.innerHTML);
+  };
+
+  return (
+    <div className="border border-neutral-200 rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-neutral-900 focus-within:border-transparent transition-all flex flex-col w-full">
+      {/* Formatting Toolbar */}
+      <div className="flex border-b border-neutral-100 bg-neutral-50 px-2 py-1 gap-1 shrink-0">
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); executeCommand('bold'); }}
+          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 rounded transition-colors cursor-pointer"
+          title="Bold (Highlight text first)"
+        >
+          <Bold size={14} />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); executeCommand('italic'); }}
+          className="p-1 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 rounded transition-colors cursor-pointer"
+          title="Italic (Highlight text first)"
+        >
+          <Italic size={14} />
+        </button>
+      </div>
+      {/* Editable Content Area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        className="w-full px-3 py-2 text-sm min-h-[70px] outline-none"
+        placeholder={placeholder}
+        suppressContentEditableWarning
+      />
+    </div>
+  );
+};
 
 export default function App() {
   const [template, setTemplate] = useState('minimal');
@@ -13,21 +68,30 @@ export default function App() {
     photo: null,
   });
 
-  // Updated state structure: sections now hold an array of 'items'
+  const [education, setEducation] = useState([
+    {
+      id: crypto.randomUUID(),
+      degree: 'Bachelor of Technology',
+      college: 'University of Technology',
+      year: '2018 - 2022'
+    }
+  ]);
+
+  // Notice: The text field now supports HTML tags like <b> and <i>
   const [sections, setSections] = useState([
     {
       id: crypto.randomUUID(),
       heading: 'Professional Summary',
       items: [
-        { id: crypto.randomUUID(), text: 'A highly motivated professional looking to leverage strong operational skills in a dynamic environment.', isBold: false }
+        { id: crypto.randomUUID(), text: 'A highly motivated professional looking to leverage <b>strong operational skills</b> in a dynamic environment.' }
       ]
     },
     {
       id: crypto.randomUUID(),
       heading: 'Experience',
       items: [
-        { id: crypto.randomUUID(), text: 'Company Name - Role', isBold: true },
-        { id: crypto.randomUUID(), text: '• Key achievement or responsibility...\n• Another key achievement...', isBold: false }
+        { id: crypto.randomUUID(), text: '<b>Company Name</b> - <i>Role</i>' },
+        { id: crypto.randomUUID(), text: '• Key achievement or responsibility...<br>• Another key achievement...' }
       ]
     }
   ]);
@@ -37,6 +101,30 @@ export default function App() {
     setPersonalData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setPersonalData((prev) => ({ ...prev, photo: imageUrl }));
+    }
+  };
+
+  // Education Handlers
+  const addEducation = () => {
+    setEducation([...education, { id: crypto.randomUUID(), degree: '', college: '', year: '' }]);
+  };
+
+  const updateEducation = (id, field, value) => {
+    setEducation((prev) =>
+      prev.map((edu) => (edu.id === id ? { ...edu, [field]: value } : edu))
+    );
+  };
+
+  const removeEducation = (id) => {
+    setEducation(education.filter((edu) => edu.id !== id));
+  };
+
+  // Section Handlers
   const handleSectionHeadingChange = (id, value) => {
     setSections((prev) =>
       prev.map((sec) => (sec.id === id ? { ...sec, heading: value } : sec))
@@ -47,7 +135,7 @@ export default function App() {
     setSections([...sections, { 
       id: crypto.randomUUID(), 
       heading: 'New Section', 
-      items: [{ id: crypto.randomUUID(), text: '', isBold: false }] 
+      items: [{ id: crypto.randomUUID(), text: '' }] 
     }]);
   };
 
@@ -55,11 +143,10 @@ export default function App() {
     setSections(sections.filter((sec) => sec.id !== id));
   };
 
-  // New item handlers
   const addSectionItem = (sectionId) => {
     setSections((prev) => prev.map((sec) => {
       if (sec.id === sectionId) {
-        return { ...sec, items: [...sec.items, { id: crypto.randomUUID(), text: '', isBold: false }] };
+        return { ...sec, items: [...sec.items, { id: crypto.randomUUID(), text: '' }] };
       }
       return sec;
     }));
@@ -86,15 +173,8 @@ export default function App() {
     }));
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setPersonalData((prev) => ({ ...prev, photo: imageUrl }));
-    }
-  };
-
   // --- Template Rendering Logic ---
+  // Using dangerouslySetInnerHTML allows the newly formatted HTML (b, i tags) to render correctly.
   const renderTemplate = () => {
     switch (template) {
       case 'classic':
@@ -112,7 +192,27 @@ export default function App() {
                 {personalData.location && <span>• {personalData.location}</span>}
               </div>
             </header>
+            
             <div className="flex-1 flex flex-col gap-6">
+              {education.length > 0 && (
+                <section>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-4 border-b border-neutral-300 pb-1">
+                    Education
+                  </h3>
+                  <div className="flex flex-col gap-4">
+                    {education.map(edu => (
+                      <div key={edu.id} className="flex justify-between items-baseline">
+                        <div>
+                          <div className="font-bold text-neutral-900">{edu.degree}</div>
+                          <div className="italic text-neutral-700 text-sm">{edu.college}</div>
+                        </div>
+                        <div className="text-sm text-neutral-500 font-medium whitespace-nowrap ml-4">{edu.year}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {sections.map((section) => (
                 <section key={section.id}>
                   <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-2 border-b border-neutral-300 pb-1">
@@ -120,9 +220,11 @@ export default function App() {
                   </h3>
                   <div className="flex flex-col gap-2 mt-3">
                     {section.items.map(item => (
-                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-800'}`}>
-                        {item.text}
-                      </div>
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-800"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
                     ))}
                   </div>
                 </section>
@@ -148,7 +250,26 @@ export default function App() {
                 {personalData.location && <div><strong className="block text-xs uppercase text-neutral-400">Location</strong>{personalData.location}</div>}
               </div>
             </div>
+            
             <div className="w-2/3 p-8 pt-12 flex flex-col gap-8 bg-white">
+              {education.length > 0 && (
+                <section>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-4 text-blue-900">
+                    Education
+                  </h3>
+                  <div className="flex flex-col gap-5">
+                    {education.map(edu => (
+                      <div key={edu.id} className="relative pl-4 border-l-2 border-neutral-200">
+                        <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-blue-900"></div>
+                        <div className="font-bold text-neutral-900">{edu.degree}</div>
+                        <div className="text-neutral-700 text-sm mt-0.5">{edu.college}</div>
+                        <div className="text-xs text-neutral-400 mt-1 uppercase tracking-wider">{edu.year}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {sections.map((section) => (
                 <section key={section.id}>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-3 text-blue-900">
@@ -156,9 +277,11 @@ export default function App() {
                   </h3>
                   <div className="flex flex-col gap-2">
                     {section.items.map(item => (
-                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-700'}`}>
-                        {item.text}
-                      </div>
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-700"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
                     ))}
                   </div>
                 </section>
@@ -185,7 +308,27 @@ export default function App() {
                 </div>
               </div>
             </header>
+            
             <div className="flex-1 flex flex-col gap-8">
+              {education.length > 0 && (
+                <section className="flex gap-6">
+                  <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
+                    Education
+                  </h3>
+                  <div className="w-3/4 flex flex-col gap-5">
+                    {education.map(edu => (
+                      <div key={edu.id} className="flex flex-col">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-bold text-neutral-900">{edu.degree}</span>
+                          <span className="text-xs text-neutral-400 font-medium">{edu.year}</span>
+                        </div>
+                        <span className="text-sm text-neutral-600">{edu.college}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {sections.map((section) => (
                 <section key={section.id} className="flex gap-6">
                   <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
@@ -193,9 +336,11 @@ export default function App() {
                   </h3>
                   <div className="w-3/4 flex flex-col gap-2">
                     {section.items.map(item => (
-                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-700'}`}>
-                        {item.text}
-                      </div>
+                      <div 
+                        key={item.id} 
+                        className="text-sm leading-relaxed text-neutral-700"
+                        dangerouslySetInnerHTML={{ __html: item.text }}
+                      />
                     ))}
                   </div>
                 </section>
@@ -208,8 +353,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-neutral-100 font-sans print:h-auto print:bg-white text-neutral-900">
-      {/* Left Sidebar - Hidden on Print */}
-      <div className="w-[420px] bg-white border-r border-neutral-200 flex flex-col print:hidden shadow-xl z-10 shrink-0">
+      {/* Left Sidebar */}
+      <div className="w-[440px] bg-white border-r border-neutral-200 flex flex-col print:hidden shadow-xl z-10 shrink-0">
         <div className="p-6 border-b border-neutral-200 flex justify-between items-center bg-neutral-50">
           <h1 className="text-lg font-semibold tracking-tight">Resume Builder</h1>
           <button 
@@ -247,6 +392,7 @@ export default function App() {
 
           <hr className="border-neutral-100" />
 
+          {/* Personal Details */}
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-4">Personal Details</h2>
             <div className="flex items-center gap-4 mb-4">
@@ -284,6 +430,63 @@ export default function App() {
 
           <hr className="border-neutral-100" />
 
+          {/* Education Form */}
+          <section>
+             <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <GraduationCap size={16} className="text-neutral-400" />
+                  <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Education</h2>
+                </div>
+                <button onClick={addEducation} className="text-neutral-500 hover:text-neutral-900 transition-colors p-1 cursor-pointer">
+                  <Plus size={16} />
+                </button>
+             </div>
+            
+            <div className="space-y-4">
+              {education.map((edu) => (
+                <div key={edu.id} className="p-4 bg-neutral-50 border border-neutral-200 rounded-lg relative group/edu shadow-sm space-y-3">
+                  <button 
+                    onClick={() => removeEducation(edu.id)}
+                    className="absolute -top-2 -right-2 p-1.5 bg-white border border-neutral-200 rounded-full text-red-500 opacity-0 group-hover/edu:opacity-100 transition-opacity shadow-sm hover:bg-red-50 cursor-pointer z-10"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  
+                  <div>
+                    <input
+                      type="text"
+                      value={edu.degree}
+                      onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm font-semibold"
+                      placeholder="Degree or Course"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={edu.college}
+                      onChange={(e) => updateEducation(edu.id, 'college', e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                      placeholder="College or University"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={edu.year}
+                      onChange={(e) => updateEducation(edu.id, 'year', e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                      placeholder="Year (e.g. 2018 - 2022)"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <hr className="border-neutral-100" />
+
+          {/* Dynamic Content Sections Form */}
           <section>
              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Content Sections</h2>
@@ -311,25 +514,17 @@ export default function App() {
                     placeholder="Section Heading"
                   />
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {section.items.map((item) => (
                       <div key={item.id} className="relative flex gap-2 items-start group/item">
                         <div className="flex-1">
-                          <textarea
-                            value={item.text}
-                            onChange={(e) => updateSectionItem(section.id, item.id, 'text', e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm min-h-[60px] resize-y transition-all ${item.isBold ? 'font-bold' : ''}`}
-                            placeholder="Add content..."
+                          <RichTextEditor 
+                            value={item.text} 
+                            onChange={(html) => updateSectionItem(section.id, item.id, 'text', html)} 
+                            placeholder="Add content... Highlight text to format."
                           />
                         </div>
-                        <div className="flex flex-col gap-1.5 shrink-0">
-                          <button
-                            onClick={() => updateSectionItem(section.id, item.id, 'isBold', !item.isBold)}
-                            className={`p-1.5 rounded-md border transition-colors ${item.isBold ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-100'}`}
-                            title="Toggle Bold"
-                          >
-                            <Bold size={14} />
-                          </button>
+                        <div className="flex flex-col shrink-0 mt-1">
                           <button
                             onClick={() => removeSectionItem(section.id, item.id)}
                             className="p-1.5 bg-white border border-neutral-200 rounded-md text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-red-50"
@@ -343,7 +538,7 @@ export default function App() {
                     
                     <button 
                       onClick={() => addSectionItem(section.id)} 
-                      className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 font-medium pt-2 w-fit"
+                      className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 font-medium pt-1 w-fit"
                     >
                       <Plus size={14} /> Add Content Block
                     </button>
@@ -355,6 +550,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* Right Canvas */}
       <div className="flex-1 overflow-y-auto bg-neutral-200 print:bg-white print:overflow-visible flex justify-center p-8 print:p-0">
         {renderTemplate()}
       </div>
