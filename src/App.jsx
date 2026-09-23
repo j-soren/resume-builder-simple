@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate } from 'lucide-react';
+import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate, Bold } from 'lucide-react';
 
 export default function App() {
-  const [template, setTemplate] = useState('minimal'); // 'minimal', 'classic', 'modern'
+  const [template, setTemplate] = useState('minimal');
   
   const [personalData, setPersonalData] = useState({
     fullName: 'Rajveer Soren',
@@ -13,16 +13,22 @@ export default function App() {
     photo: null,
   });
 
+  // Updated state structure: sections now hold an array of 'items'
   const [sections, setSections] = useState([
     {
       id: crypto.randomUUID(),
       heading: 'Professional Summary',
-      text: 'A highly motivated professional looking to leverage strong operational skills in a dynamic environment.',
+      items: [
+        { id: crypto.randomUUID(), text: 'A highly motivated professional looking to leverage strong operational skills in a dynamic environment.', isBold: false }
+      ]
     },
     {
       id: crypto.randomUUID(),
       heading: 'Experience',
-      text: 'Company Name - Role\n• Key achievement or responsibility...\n• Another key achievement...',
+      items: [
+        { id: crypto.randomUUID(), text: 'Company Name - Role', isBold: true },
+        { id: crypto.randomUUID(), text: '• Key achievement or responsibility...\n• Another key achievement...', isBold: false }
+      ]
     }
   ]);
 
@@ -31,18 +37,53 @@ export default function App() {
     setPersonalData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSectionChange = (id, field, value) => {
+  const handleSectionHeadingChange = (id, value) => {
     setSections((prev) =>
-      prev.map((sec) => (sec.id === id ? { ...sec, [field]: value } : sec))
+      prev.map((sec) => (sec.id === id ? { ...sec, heading: value } : sec))
     );
   };
 
   const addSection = () => {
-    setSections([...sections, { id: crypto.randomUUID(), heading: 'New Section', text: '' }]);
+    setSections([...sections, { 
+      id: crypto.randomUUID(), 
+      heading: 'New Section', 
+      items: [{ id: crypto.randomUUID(), text: '', isBold: false }] 
+    }]);
   };
 
   const removeSection = (id) => {
     setSections(sections.filter((sec) => sec.id !== id));
+  };
+
+  // New item handlers
+  const addSectionItem = (sectionId) => {
+    setSections((prev) => prev.map((sec) => {
+      if (sec.id === sectionId) {
+        return { ...sec, items: [...sec.items, { id: crypto.randomUUID(), text: '', isBold: false }] };
+      }
+      return sec;
+    }));
+  };
+
+  const updateSectionItem = (sectionId, itemId, field, value) => {
+    setSections((prev) => prev.map((sec) => {
+      if (sec.id === sectionId) {
+        return {
+          ...sec,
+          items: sec.items.map((item) => item.id === itemId ? { ...item, [field]: value } : item)
+        };
+      }
+      return sec;
+    }));
+  };
+
+  const removeSectionItem = (sectionId, itemId) => {
+    setSections((prev) => prev.map((sec) => {
+      if (sec.id === sectionId) {
+        return { ...sec, items: sec.items.filter((item) => item.id !== itemId) };
+      }
+      return sec;
+    }));
   };
 
   const handlePhotoUpload = (e) => {
@@ -77,8 +118,12 @@ export default function App() {
                   <h3 className="text-sm font-bold uppercase tracking-widest text-neutral-900 mb-2 border-b border-neutral-300 pb-1">
                     {section.heading || 'Untitled Section'}
                   </h3>
-                  <div className="text-neutral-800 text-sm leading-relaxed whitespace-pre-wrap mt-2">
-                    {section.text || 'Add content for this section.'}
+                  <div className="flex flex-col gap-2 mt-3">
+                    {section.items.map(item => (
+                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-800'}`}>
+                        {item.text}
+                      </div>
+                    ))}
                   </div>
                 </section>
               ))}
@@ -89,7 +134,6 @@ export default function App() {
       case 'modern':
         return (
           <div className="font-sans w-full max-w-[210mm] min-h-[297mm] bg-white mx-auto box-border flex text-neutral-900 shadow-2xl print:shadow-none print:w-[210mm] print:h-[297mm] print:p-0 overflow-hidden">
-            {/* Left Column */}
             <div className="w-1/3 bg-neutral-100 p-8 flex flex-col gap-8 print:bg-neutral-100 print:color-adjust-exact" style={{ WebkitPrintColorAdjust: 'exact' }}>
               <div className="flex flex-col items-center text-center mt-4">
                 {personalData.photo && (
@@ -104,15 +148,18 @@ export default function App() {
                 {personalData.location && <div><strong className="block text-xs uppercase text-neutral-400">Location</strong>{personalData.location}</div>}
               </div>
             </div>
-            {/* Right Column */}
             <div className="w-2/3 p-8 pt-12 flex flex-col gap-8 bg-white">
               {sections.map((section) => (
                 <section key={section.id}>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 mb-3 text-blue-900">
                     {section.heading || 'Untitled Section'}
                   </h3>
-                  <div className="text-neutral-700 text-sm leading-relaxed whitespace-pre-wrap">
-                    {section.text || 'Add content for this section.'}
+                  <div className="flex flex-col gap-2">
+                    {section.items.map(item => (
+                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-700'}`}>
+                        {item.text}
+                      </div>
+                    ))}
                   </div>
                 </section>
               ))}
@@ -144,8 +191,12 @@ export default function App() {
                   <h3 className="w-1/4 text-xs font-bold uppercase tracking-widest text-neutral-400 pt-1 shrink-0">
                     {section.heading || 'Untitled'}
                   </h3>
-                  <div className="w-3/4 text-neutral-800 text-sm leading-relaxed whitespace-pre-wrap">
-                    {section.text || 'Add content for this section.'}
+                  <div className="w-3/4 flex flex-col gap-2">
+                    {section.items.map(item => (
+                      <div key={item.id} className={`text-sm leading-relaxed whitespace-pre-wrap ${item.isBold ? 'font-bold text-neutral-900' : 'text-neutral-700'}`}>
+                        {item.text}
+                      </div>
+                    ))}
                   </div>
                 </section>
               ))}
@@ -158,7 +209,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-neutral-100 font-sans print:h-auto print:bg-white text-neutral-900">
       {/* Left Sidebar - Hidden on Print */}
-      <div className="w-[400px] bg-white border-r border-neutral-200 flex flex-col print:hidden shadow-xl z-10 shrink-0">
+      <div className="w-[420px] bg-white border-r border-neutral-200 flex flex-col print:hidden shadow-xl z-10 shrink-0">
         <div className="p-6 border-b border-neutral-200 flex justify-between items-center bg-neutral-50">
           <h1 className="text-lg font-semibold tracking-tight">Resume Builder</h1>
           <button 
@@ -172,7 +223,6 @@ export default function App() {
         
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           
-          {/* Template Selector */}
           <section className="space-y-4">
              <div className="flex items-center gap-2 mb-4">
                 <LayoutTemplate size={16} className="text-neutral-400" />
@@ -197,10 +247,8 @@ export default function App() {
 
           <hr className="border-neutral-100" />
 
-          {/* Personal Info Form */}
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-4">Personal Details</h2>
-            
             <div className="flex items-center gap-4 mb-4">
               <label className="flex flex-col items-center justify-center w-16 h-16 rounded-full border-2 border-dashed border-neutral-300 hover:border-neutral-500 cursor-pointer bg-neutral-50 overflow-hidden group relative">
                 {personalData.photo ? (
@@ -236,7 +284,6 @@ export default function App() {
 
           <hr className="border-neutral-100" />
 
-          {/* Dynamic Sections Form */}
           <section>
              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Content Sections</h2>
@@ -247,26 +294,60 @@ export default function App() {
             
             <div className="space-y-6">
               {sections.map((section) => (
-                <div key={section.id} className="p-4 bg-neutral-50 border border-neutral-200 rounded-lg relative group">
+                <div key={section.id} className="p-5 bg-neutral-50 border border-neutral-200 rounded-lg relative group/section shadow-sm">
                   <button 
                     onClick={() => removeSection(section.id)}
-                    className="absolute -top-2 -right-2 p-1.5 bg-white border border-neutral-200 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50 cursor-pointer"
+                    className="absolute -top-2 -right-2 p-1.5 bg-white border border-neutral-200 rounded-full text-red-500 opacity-0 group-hover/section:opacity-100 transition-opacity shadow-sm hover:bg-red-50 cursor-pointer z-10"
+                    title="Delete entire section"
                   >
                     <Trash2 size={14} />
                   </button>
+                  
                   <input
                     type="text"
                     value={section.heading}
-                    onChange={(e) => handleSectionChange(section.id, 'heading', e.target.value)}
-                    className="w-full px-0 py-1 bg-transparent border-b border-neutral-300 focus:border-neutral-900 focus:outline-none text-sm font-bold mb-3 transition-colors"
+                    onChange={(e) => handleSectionHeadingChange(section.id, e.target.value)}
+                    className="w-full px-0 py-1 bg-transparent border-b border-neutral-300 focus:border-neutral-900 focus:outline-none text-sm font-bold mb-4 transition-colors"
                     placeholder="Section Heading"
                   />
-                  <textarea
-                    value={section.text}
-                    onChange={(e) => handleSectionChange(section.id, 'text', e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm min-h-[100px] resize-y transition-all"
-                    placeholder="Section content..."
-                  />
+                  
+                  <div className="space-y-3">
+                    {section.items.map((item) => (
+                      <div key={item.id} className="relative flex gap-2 items-start group/item">
+                        <div className="flex-1">
+                          <textarea
+                            value={item.text}
+                            onChange={(e) => updateSectionItem(section.id, item.id, 'text', e.target.value)}
+                            className={`w-full px-3 py-2 bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm min-h-[60px] resize-y transition-all ${item.isBold ? 'font-bold' : ''}`}
+                            placeholder="Add content..."
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5 shrink-0">
+                          <button
+                            onClick={() => updateSectionItem(section.id, item.id, 'isBold', !item.isBold)}
+                            className={`p-1.5 rounded-md border transition-colors ${item.isBold ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-100'}`}
+                            title="Toggle Bold"
+                          >
+                            <Bold size={14} />
+                          </button>
+                          <button
+                            onClick={() => removeSectionItem(section.id, item.id)}
+                            className="p-1.5 bg-white border border-neutral-200 rounded-md text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-red-50"
+                            title="Remove Block"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button 
+                      onClick={() => addSectionItem(section.id)} 
+                      className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 font-medium pt-2 w-fit"
+                    >
+                      <Plus size={14} /> Add Content Block
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -274,7 +355,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Right Canvas - The Resume Preview (Printable area) */}
       <div className="flex-1 overflow-y-auto bg-neutral-200 print:bg-white print:overflow-visible flex justify-center p-8 print:p-0">
         {renderTemplate()}
       </div>
