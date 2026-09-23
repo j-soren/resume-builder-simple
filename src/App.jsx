@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate, Bold, Italic, GraduationCap } from 'lucide-react';
+import { Download, Plus, Trash2, Upload, Camera, LayoutTemplate, Bold, Italic, GraduationCap, ChevronUp, ChevronDown } from 'lucide-react';
 
 // --- Custom Minimalist Rich Text Editor ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
-  // Sync external changes (like initial load) without resetting cursor while typing
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.innerHTML) {
       editorRef.current.innerHTML = value;
@@ -24,7 +23,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
 
   return (
     <div className="border border-neutral-200 rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-neutral-900 focus-within:border-transparent transition-all flex flex-col w-full">
-      {/* Formatting Toolbar */}
       <div className="flex border-b border-neutral-100 bg-neutral-50 px-2 py-1 gap-1 shrink-0">
         <button
           type="button"
@@ -43,7 +41,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           <Italic size={14} />
         </button>
       </div>
-      {/* Editable Content Area */}
       <div
         ref={editorRef}
         contentEditable
@@ -77,7 +74,6 @@ export default function App() {
     }
   ]);
 
-  // Notice: The text field now supports HTML tags like <b> and <i>
   const [sections, setSections] = useState([
     {
       id: crypto.randomUUID(),
@@ -143,6 +139,24 @@ export default function App() {
     setSections(sections.filter((sec) => sec.id !== id));
   };
 
+  const moveSectionUp = (index) => {
+    if (index === 0) return;
+    const newSections = [...sections];
+    const temp = newSections[index - 1];
+    newSections[index - 1] = newSections[index];
+    newSections[index] = temp;
+    setSections(newSections);
+  };
+
+  const moveSectionDown = (index) => {
+    if (index === sections.length - 1) return;
+    const newSections = [...sections];
+    const temp = newSections[index + 1];
+    newSections[index + 1] = newSections[index];
+    newSections[index] = temp;
+    setSections(newSections);
+  };
+
   const addSectionItem = (sectionId) => {
     setSections((prev) => prev.map((sec) => {
       if (sec.id === sectionId) {
@@ -174,7 +188,6 @@ export default function App() {
   };
 
   // --- Template Rendering Logic ---
-  // Using dangerouslySetInnerHTML allows the newly formatted HTML (b, i tags) to render correctly.
   const renderTemplate = () => {
     switch (template) {
       case 'classic':
@@ -496,15 +509,34 @@ export default function App() {
              </div>
             
             <div className="space-y-6">
-              {sections.map((section) => (
+              {sections.map((section, index) => (
                 <div key={section.id} className="p-5 bg-neutral-50 border border-neutral-200 rounded-lg relative group/section shadow-sm">
-                  <button 
-                    onClick={() => removeSection(section.id)}
-                    className="absolute -top-2 -right-2 p-1.5 bg-white border border-neutral-200 rounded-full text-red-500 opacity-0 group-hover/section:opacity-100 transition-opacity shadow-sm hover:bg-red-50 cursor-pointer z-10"
-                    title="Delete entire section"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {/* Reorder and Delete Controls */}
+                  <div className="absolute -top-3 -right-2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity z-10">
+                    <button 
+                      onClick={() => moveSectionUp(index)} 
+                      disabled={index === 0}
+                      className="p-1.5 bg-white border border-neutral-200 rounded-full text-neutral-500 hover:text-neutral-900 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      title="Move Up"
+                    >
+                      <ChevronUp size={14} />
+                    </button>
+                    <button 
+                      onClick={() => moveSectionDown(index)} 
+                      disabled={index === sections.length - 1}
+                      className="p-1.5 bg-white border border-neutral-200 rounded-full text-neutral-500 hover:text-neutral-900 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      title="Move Down"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                    <button 
+                      onClick={() => removeSection(section.id)}
+                      className="p-1.5 bg-white border border-neutral-200 rounded-full text-red-500 hover:bg-red-50 shadow-sm cursor-pointer"
+                      title="Delete entire section"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                   
                   <input
                     type="text"
@@ -538,7 +570,7 @@ export default function App() {
                     
                     <button 
                       onClick={() => addSectionItem(section.id)} 
-                      className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 font-medium pt-1 w-fit"
+                      className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 font-medium pt-1 w-fit cursor-pointer"
                     >
                       <Plus size={14} /> Add Content Block
                     </button>
