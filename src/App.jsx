@@ -426,6 +426,18 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-neutral-100 font-sans print:h-auto print:bg-white text-neutral-900">
+      {/* 
+        This style block forces the browser to hide the default 
+        headers and footers (URL, page numbers, date) when printing. 
+      */}
+      <style>
+        {`
+          @media print {
+            @page { margin: 0; }
+          }
+        `}
+      </style>
+
       {/* Left Sidebar */}
       <div className="w-[440px] bg-white border-r border-neutral-200 flex flex-col print:hidden shadow-xl z-10 shrink-0">
         <div className="p-6 border-b border-neutral-200 flex justify-between items-center bg-neutral-50">
