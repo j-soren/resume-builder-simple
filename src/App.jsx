@@ -60,7 +60,7 @@ export default function App() {
     fullName: 'Rajveer Soren',
     jobTitle: 'Professional Title',
     email: 'rajveer@example.com',
-    phone: '+91 9876543210',
+    phone: '+91 9999988888',
     location: 'Patna, Bihar',
     photo: null,
   });
